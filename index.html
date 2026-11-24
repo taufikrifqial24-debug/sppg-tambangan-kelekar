@@ -162,50 +162,39 @@ function tampilkanLogin() {
   loginScreen.style.display = 'flex';
 }
 
+
 loginForm.addEventListener('submit', async function(e) {
   e.preventDefault();
 
   loginButton.disabled = true;
   loginButton.textContent = 'Memeriksa...';
-  loginError.textContent = '';
+  loginError.textContent = 'Menghubungkan ke server...';
 
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
+  try {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
 
-  const { data, error } = await sb.auth.signInWithPassword({
-    email: email,
-    password: password
-  });
+    const { data, error } = await sb.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
 
-  loginButton.disabled = false;
-  loginButton.textContent = 'Login Admin';
+    if (error) {
+      loginError.textContent = 'Login gagal: ' + error.message;
+      return;
+    }
 
-  if (error) {
-    loginError.textContent = 'Login gagal: ' + error.message;
-    return;
-  }
+    if (data.session) {
+      loginError.textContent = 'Login berhasil. Membuka aplikasi...';
+      tampilkanAplikasi();
+    }
 
-  if (data.session) {
-    tampilkanAplikasi();
-  }
-});
+  } catch (err) {
+    loginError.textContent = 'Terjadi kesalahan: ' + err.message;
 
-// Periksa apakah Admin sudah login sebelumnya
-async function periksaLogin() {
-  const { data, error } = await sb.auth.getSession();
-
-  if (error || !data.session) {
-    tampilkanLogin();
-  } else {
-    tampilkanAplikasi();
-  }
-}
-
-sb.auth.onAuthStateChange((event, session) => {
-  if (session) {
-    tampilkanAplikasi();
-  } else {
-    tampilkanLogin();
+  } finally {
+    loginButton.disabled = false;
+    loginButton.textContent = 'Login Admin';
   }
 });
 
